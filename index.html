@@ -1,152 +1,75 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Cal AI - Food Classifier</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: 'Helvetica Neue', sans-serif;
-      background: #f6f8fb;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-    }
-    h1 {
-      margin: 20px;
-      font-size: 22px;
-      color: #333;
-    }
-    #upload-label {
-      display: inline-block;
-      background: #4285f4;
-      color: white;
-      padding: 12px 20px;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-    #fileInput {
-      display: none;
-    }
-    #preview {
-      margin-top: 20px;
-      max-width: 90%%;
-      border-radius: 12px;
-      display: none;
-    }
-    .loader {
-      margin: 20px auto;
-      border: 6px solid #f3f3f3;
-      border-top: 6px solid #4285f4;
-      border-radius: 50%%;
-      width: 36px;
-      height: 36px;
-      animation: spin 1s linear infinite;
-      display: none;
-    }
-    @keyframes spin {
-      0%% { transform: rotate(0deg); }
-      100%% { transform: rotate(360deg); }
-    }
-    .bar-wrapper {
-      width: 80%%;
-      max-width: 300px;
-      margin: 10px auto;
-      text-align: left;
-    }
-    .bar-label {
-      font-size: 16px;
-      margin-bottom: 4px;
-    }
-    .bar {
-      height: 24px;
-      background: #e0e0e0;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    .bar-inner {
-      height: 100%%;
-      text-align: right;
-      padding-right: 8px;
-      color: white;
-      font-size: 14px;
-      line-height: 24px;
-    }
-    .bar-healthy {
-      background-color: #f39c12;
-    }
-    .bar-unhealthy {
-      background-color: #e74c3c;
-    }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
+    <title>Healthy Plate Classifier</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; height: 100vh; margin: 0; }
+        #left, #right { width: 50%; padding: 20px; box-sizing: border-box; }
+        #progress { width: 100%; height: 20px; background: #eee; margin-top: 10px; }
+        #progress-bar { height: 100%; background: green; width: 0%; }
+        .bar-container { width: 100%; height: 30px; background: #eee; margin-top: 20px; border-radius: 5px; overflow: hidden; }
+        .bar { height: 100%; text-align: center; color: white; line-height: 30px; font-weight: bold; }
+        .healthy { background: green; }
+        .unhealthy { background: red; }
+    </style>
 </head>
 <body>
-  <h1>🍽️ Cal AI | Plate Health Detector</h1>
-  <label id="upload-label" for="fileInput">📤 Upload or Take a Photo</label>
-  <input id="fileInput" type="file" accept="image/*" capture="environment" onchange="handleImage(this)" />
-  <div class="loader" id="loader"></div>
-  <img id="preview" src="#" alt="Preview" />
-  <div id="result-bars"></div>
+    <div id="left">
+        <h2>Upload a Plate Image</h2>
+        <input type="file" id="upload" accept="image/*"><br>
+        <div id="progress"><div id="progress-bar"></div></div>
+        <img id="image" width="300" style="margin-top:20px; display:none;">
+    </div>
+    <div id="right">
+        <h2>Prediction Result</h2>
+        <div id="bars"></div>
+    </div>
 
-  <script>
-    const URL = "my_model/";
-    let model, maxPredictions;
+    <script>
+        const URL = "./my_model/";
+        let model, image;
 
-    async function initModel() {
-      model = await tmImage.load(URL + "model.json", URL + "metadata.json");
-      maxPredictions = model.getTotalClasses();
-    }
+        async function initModel() {
+            model = await tmImage.load(URL + "model.json", URL + "metadata.json");
+        }
 
-    initModel();
+        document.getElementById("upload").addEventListener("change", async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-    async function handleImage(input) {
-      const file = input.files[0];
-      if (!file) return;
+            const progressBar = document.getElementById("progress-bar");
+            progressBar.style.width = "50%";
 
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const img = document.getElementById("preview");
-        img.src = e.target.result;
-        img.style.display = "block";
-        document.getElementById("loader").style.display = "block";
-        document.getElementById("result-bars").innerHTML = "";
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                image = new Image();
+                image.src = event.target.result;
+                image.onload = async () => {
+                    progressBar.style.width = "100%";
+                    document.getElementById("image").src = image.src;
+                    document.getElementById("image").style.display = "block";
 
-        img.onload = async () => {
-          const prediction = await model.predict(img);
-          document.getElementById("loader").style.display = "none";
-          const container = document.getElementById("result-bars");
+                    const prediction = await model.predict(image);
+                    let bars = "";
+                    prediction.forEach(p => {
+                        const isHealthy = p.className.toLowerCase().includes("healthy");
+                        const barColor = isHealthy ? "healthy" : "unhealthy";
+                        bars += `<div class="bar-container">
+                                    <div class="bar ${barColor}" style="width:${(p.probability*100).toFixed(0)}%">
+                                        ${p.className}: ${(p.probability*100).toFixed(1)}%
+                                    </div>
+                                 </div>`;
+                    });
+                    document.getElementById("bars").innerHTML = bars;
+                };
+            };
+            reader.readAsDataURL(file);
+        });
 
-          prediction.forEach(p => {
-            const wrapper = document.createElement("div");
-            wrapper.className = "bar-wrapper";
-
-            const label = document.createElement("div");
-            label.className = "bar-label";
-            label.textContent = `${p.className}`;
-            wrapper.appendChild(label);
-
-            const bar = document.createElement("div");
-            bar.className = "bar";
-
-            const barInner = document.createElement("div");
-            const percent = (p.probability * 100).toFixed(0);
-            barInner.className = "bar-inner " + (p.className.toLowerCase().includes("healthy") ? "bar-healthy" : "bar-unhealthy");
-            barInner.style.width = percent + "%%";
-            barInner.textContent = percent + "%%";
-
-            bar.appendChild(barInner);
-            wrapper.appendChild(bar);
-            container.appendChild(wrapper);
-          });
-        };
-      };
-      reader.readAsDataURL(file);
-    }
-  </script>
+        initModel();
+    </script>
 </body>
 </html>
