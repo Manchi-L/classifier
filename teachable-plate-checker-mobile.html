@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>餐盘健康识别器</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        #preview {
+            margin-top: 15px;
+            max-width: 90%%;
+            border-radius: 8px;
+        }
+        #label-container div {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #222;
+        }
+        .button-group {
+            margin-top: 15px;
+        }
+        .button-group input {
+            margin: 5px;
+        }
+        .loader {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0%% { transform: rotate(0deg); }
+            100%% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>🍽️ 餐盘健康识别器</h1>
+    <p>拍照或上传照片，识别餐盘内容是否健康</p>
+    <div class="button-group">
+        <input type="file" accept="image/*" capture="user" onchange="handleImage(this)" />
+        <input type="file" accept="image/*" onchange="handleImage(this)" />
+    </div>
+    <div class="loader" id="loader"></div>
+    <img id="preview" src="#" alt="预览图像" style="display:none;" />
+    <div id="label-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
+    <script>
+        const URL = "my_model/";
+        let model, maxPredictions;
+
+        window.onload = async () => {
+            model = await tmImage.load(URL + "model.json", URL + "metadata.json");
+            maxPredictions = model.getTotalClasses();
+        };
+
+        async function handleImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                const img = document.getElementById("preview");
+                img.src = e.target.result;
+                img.style.display = "block";
+                document.getElementById("loader").style.display = "block";
+                document.getElementById("label-container").innerHTML = "";
+
+                await new Promise(resolve => setTimeout(resolve, 300)); // 延迟等待图像渲染
+
+                img.onload = async () => {
+                    const prediction = await model.predict(img);
+                    document.getElementById("loader").style.display = "none";
+                    const labelContainer = document.getElementById("label-container");
+                    prediction.forEach(p => {
+                        const div = document.createElement("div");
+                        div.textContent = `${p.className}: ${(p.probability * 100).toFixed(1)}%`;
+                        labelContainer.appendChild(div);
+                    });
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>
