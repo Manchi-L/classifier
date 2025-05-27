@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>My Teachable Machine Classifier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { text-align: center; font-family: sans-serif; background: #f4f4f4; }
+    video, canvas { width: 100%; max-width: 320px; }
+    #label-container div { margin-top: 5px; font-size: 1.2em; }
+  </style>
+</head>
+<body>
+  <h2>📷 AI Image Classifier</h2>
+  <button onclick="init()">Start</button>
+  <div id="webcam-container"></div>
+  <div id="label-container"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
+  <script src="script.js"></script>
+</body>
+</html>
