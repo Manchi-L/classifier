@@ -1,66 +1,95 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Image Classifier</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #0f172a;
-      color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 2rem;
-    }
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-    }
-    button {
-      background-color: #2563eb;
-      color: white;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
-      margin: 0.5rem;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #1d4ed8;
-    }
-    video, img {
-      margin-top: 1rem;
-      width: 300px;
-      height: auto;
-      border-radius: 8px;
-    }
-    #results {
-      margin-top: 1.5rem;
-      font-size: 1.2rem;
-      color: #38bdf8;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>餐盘健康分类器 | Teachable Machine Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: "Arial", sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f4f8;
+        }
+        h1 {
+            color: #333;
+        }
+        #webcam-container {
+            margin: 20px auto;
+            width: 200px;
+            height: 200px;
+        }
+        #label-container div {
+            margin-top: 10px;
+            font-size: 18px;
+            color: #444;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
-  <h1>🚀 AI Image Classifier</h1>
-  <button onclick="useWebcam()">Use Webcam</button>
-  <button onclick="uploadImage()">Upload Image</button>
-  <div>
-    <video id="webcam" autoplay playsinline style="display:none;"></video>
-    <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleImageUpload(event)" />
-    <img id="preview" style="display:none;" />
-  </div>
-  <div id="results">Please select an input method.</div>
+    <h1>🍽️ 餐盘健康识别器</h1>
+    <p>使用摄像头识别餐盘内容是否健康</p>
+    <button type="button" onclick="init()">启动识别</button>
+    <div id="webcam-container"></div>
+    <div id="label-container"></div>
 
-  <!-- ✅ 正确加载 TensorFlow 和 Teachable Machine 库 -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
-  <!-- ✅ 加载你的逻辑代码 -->
-  <script src="script.js"></script>
+    <!-- TensorFlow.js 和 Teachable Machine 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+    <script type="text/javascript">
+        const URL = "my_model/";
+
+        let model, webcam, labelContainer, maxPredictions;
+
+        async function init() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            const flip = true;
+            webcam = new tmImage.Webcam(200, 200, flip);
+            await webcam.setup();
+            await webcam.play();
+            window.requestAnimationFrame(loop);
+
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
+            labelContainer = document.getElementById("label-container");
+            labelContainer.innerHTML = "";
+            for (let i = 0; i < maxPredictions; i++) {
+                labelContainer.appendChild(document.createElement("div"));
+            }
+        }
+
+        async function loop() {
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
+
+        async function predict() {
+            const prediction = await model.predict(webcam.canvas);
+            for (let i = 0; i < maxPredictions; i++) {
+                const classPrediction = prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(1) + "%";
+                labelContainer.childNodes[i].innerHTML = classPrediction;
+            }
+        }
+    </script>
 </body>
 </html>
