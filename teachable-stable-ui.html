@@ -1,0 +1,144 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>餐盘健康识别器 | Cal AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        header {
+            padding: 20px 16px 12px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #111;
+            border-bottom: 1px solid #eee;
+        }
+        .container {
+            padding: 20px;
+        }
+        .circle-button {
+            background-color: #000;
+            color: #fff;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%%;
+            font-size: 32px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px auto 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            cursor: pointer;
+        }
+        #fileInput {
+            display: none;
+        }
+        #preview {
+            max-width: 90%%;
+            border-radius: 12px;
+            margin-top: 10px;
+            display: none;
+        }
+        .loader {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%%;
+            width: 36px;
+            height: 36px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0%% { transform: rotate(0deg); }
+            100%% { transform: rotate(360deg); }
+        }
+        .results {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #111;
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            border-top: 1px solid #eee;
+            background-color: #fff;
+        }
+        footer div {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+        }
+    </style>
+    <!-- 必须的模型库 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
+</head>
+<body>
+    <header>📷 Cal AI</header>
+    <div class="container">
+        <label for="fileInput">
+            <div class="circle-button">+</div>
+        </label>
+        <input id="fileInput" type="file" accept="image/*" capture="environment" onchange="handleImage(this)" />
+        <div class="loader" id="loader"></div>
+        <img id="preview" src="#" alt="预览图像" />
+        <div id="label-container" class="results"></div>
+    </div>
+    <footer>
+        <div>🏠<br>首页</div>
+        <div>📊<br>进度</div>
+        <div>⚙️<br>设置</div>
+    </footer>
+
+    <script>
+        const URL = "my_model/";
+        let model, maxPredictions;
+
+        async function initModel() {
+            model = await tmImage.load(URL + "model.json", URL + "metadata.json");
+            maxPredictions = model.getTotalClasses();
+        }
+
+        initModel(); // 初始化模型
+
+        async function handleImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = document.getElementById("preview");
+                img.src = e.target.result;
+                img.style.display = "block";
+                document.getElementById("loader").style.display = "block";
+                document.getElementById("label-container").innerHTML = "";
+
+                img.onload = async () => {
+                    const prediction = await model.predict(img);
+                    document.getElementById("loader").style.display = "none";
+                    const labelContainer = document.getElementById("label-container");
+                    prediction.forEach(p => {
+                        const div = document.createElement("div");
+                        div.textContent = `${p.className}: ${(p.probability * 100).toFixed(1)}%`;
+                        labelContainer.appendChild(div);
+                    });
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>
