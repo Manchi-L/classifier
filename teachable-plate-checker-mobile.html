@@ -4,33 +4,33 @@
 <head>
     <meta charset="UTF-8">
     <title>餐盘健康识别器</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             margin: 0;
             padding: 20px;
-            background-color: #f4f4f4;
+            background-color: #f9f9f9;
         }
         h1 {
+            font-size: 22px;
             color: #333;
         }
+        .button-group input {
+            margin: 10px 5px;
+            font-size: 16px;
+        }
         #preview {
-            margin-top: 15px;
+            margin-top: 20px;
             max-width: 90%%;
             border-radius: 8px;
+            display: none;
         }
         #label-container div {
             margin-top: 10px;
             font-size: 16px;
             color: #222;
-        }
-        .button-group {
-            margin-top: 15px;
-        }
-        .button-group input {
-            margin: 5px;
         }
         .loader {
             border: 6px solid #f3f3f3;
@@ -49,14 +49,14 @@
     </style>
 </head>
 <body>
-    <h1>🍽️ 餐盘健康识别器</h1>
-    <p>拍照或上传照片，识别餐盘内容是否健康</p>
+    <h1>📷 餐盘健康识别器</h1>
+    <p>拍照或上传餐盘照片，识别是否健康</p>
     <div class="button-group">
-        <input type="file" accept="image/*" capture="user" onchange="handleImage(this)" />
+        <input type="file" accept="image/*" capture="environment" onchange="handleImage(this)" />
         <input type="file" accept="image/*" onchange="handleImage(this)" />
     </div>
     <div class="loader" id="loader"></div>
-    <img id="preview" src="#" alt="预览图像" style="display:none;" />
+    <img id="preview" src="#" alt="预览图像" />
     <div id="label-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
@@ -82,7 +82,7 @@
                 document.getElementById("loader").style.display = "block";
                 document.getElementById("label-container").innerHTML = "";
 
-                await new Promise(resolve => setTimeout(resolve, 300)); // 延迟等待图像渲染
+                await new Promise(resolve => setTimeout(resolve, 300));
 
                 img.onload = async () => {
                     const prediction = await model.predict(img);
