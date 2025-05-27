@@ -1,0 +1,152 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cal AI - Food Classifier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Helvetica Neue', sans-serif;
+      background: #f6f8fb;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    h1 {
+      margin: 20px;
+      font-size: 22px;
+      color: #333;
+    }
+    #upload-label {
+      display: inline-block;
+      background: #4285f4;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    #fileInput {
+      display: none;
+    }
+    #preview {
+      margin-top: 20px;
+      max-width: 90%%;
+      border-radius: 12px;
+      display: none;
+    }
+    .loader {
+      margin: 20px auto;
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #4285f4;
+      border-radius: 50%%;
+      width: 36px;
+      height: 36px;
+      animation: spin 1s linear infinite;
+      display: none;
+    }
+    @keyframes spin {
+      0%% { transform: rotate(0deg); }
+      100%% { transform: rotate(360deg); }
+    }
+    .bar-wrapper {
+      width: 80%%;
+      max-width: 300px;
+      margin: 10px auto;
+      text-align: left;
+    }
+    .bar-label {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+    .bar {
+      height: 24px;
+      background: #e0e0e0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .bar-inner {
+      height: 100%%;
+      text-align: right;
+      padding-right: 8px;
+      color: white;
+      font-size: 14px;
+      line-height: 24px;
+    }
+    .bar-healthy {
+      background-color: #f39c12;
+    }
+    .bar-unhealthy {
+      background-color: #e74c3c;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
+</head>
+<body>
+  <h1>🍽️ Cal AI | Plate Health Detector</h1>
+  <label id="upload-label" for="fileInput">📤 Upload or Take a Photo</label>
+  <input id="fileInput" type="file" accept="image/*" capture="environment" onchange="handleImage(this)" />
+  <div class="loader" id="loader"></div>
+  <img id="preview" src="#" alt="Preview" />
+  <div id="result-bars"></div>
+
+  <script>
+    const URL = "my_model/";
+    let model, maxPredictions;
+
+    async function initModel() {
+      model = await tmImage.load(URL + "model.json", URL + "metadata.json");
+      maxPredictions = model.getTotalClasses();
+    }
+
+    initModel();
+
+    async function handleImage(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = document.getElementById("preview");
+        img.src = e.target.result;
+        img.style.display = "block";
+        document.getElementById("loader").style.display = "block";
+        document.getElementById("result-bars").innerHTML = "";
+
+        img.onload = async () => {
+          const prediction = await model.predict(img);
+          document.getElementById("loader").style.display = "none";
+          const container = document.getElementById("result-bars");
+
+          prediction.forEach(p => {
+            const wrapper = document.createElement("div");
+            wrapper.className = "bar-wrapper";
+
+            const label = document.createElement("div");
+            label.className = "bar-label";
+            label.textContent = `${p.className}`;
+            wrapper.appendChild(label);
+
+            const bar = document.createElement("div");
+            bar.className = "bar";
+
+            const barInner = document.createElement("div");
+            const percent = (p.probability * 100).toFixed(0);
+            barInner.className = "bar-inner " + (p.className.toLowerCase().includes("healthy") ? "bar-healthy" : "bar-unhealthy");
+            barInner.style.width = percent + "%%";
+            barInner.textContent = percent + "%%";
+
+            bar.appendChild(barInner);
+            wrapper.appendChild(bar);
+            container.appendChild(wrapper);
+          });
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+  </script>
+</body>
+</html>
