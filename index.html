@@ -1,20 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>My Teachable Machine Classifier</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Image Classifier</title>
   <style>
-    body { text-align: center; font-family: sans-serif; background: #f4f4f4; }
-    video, canvas { width: 100%; max-width: 320px; }
-    #label-container div { margin-top: 5px; font-size: 1.2em; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      margin: 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    video, img {
+      margin-top: 1rem;
+      width: 300px;
+      height: auto;
+      border-radius: 8px;
+    }
+    #results {
+      margin-top: 1.5rem;
+      font-size: 1.2rem;
+      color: #38bdf8;
+    }
   </style>
 </head>
 <body>
-  <h2>📷 AI Image Classifier</h2>
-  <button onclick="init()">Start</button>
-  <div id="webcam-container"></div>
-  <div id="label-container"></div>
+  <h1>🚀 AI Image Classifier</h1>
+  <button onclick="useWebcam()">Use Webcam</button>
+  <button onclick="uploadImage()">Upload Image</button>
+  <div>
+    <video id="webcam" autoplay playsinline style="display:none;"></video>
+    <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleImageUpload(event)" />
+    <img id="preview" style="display:none;" />
+  </div>
+  <div id="results">Please select an input method.</div>
 
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
