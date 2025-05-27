@@ -53,10 +53,8 @@ async function handleImageUpload(event) {
   const reader = new FileReader();
   reader.onload = async (e) => {
     previewImage.src = e.target.result;
-    const img = new Image();
-    img.src = e.target.result;
-    img.onload = async () => {
-      const prediction = await model.predict(img);
+    previewImage.onload = async () => {
+      const prediction = await model.predict(previewImage);
       showResults(prediction);
     };
   };
